@@ -1,23 +1,35 @@
 name: Build video
-on: workflow_dispatch
+on:
+  push:
+    paths:
+      - 'voice.mp3'
+      - 'script.txt'
+      - 'engine.zip'
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Unzip project
-        run: unzip -oq Deenora_Video_Project.zip
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Prepare
+        run: |
+          unzip -oq engine.zip
+          mkdir -p input
+          cp voice.mp3 input/voice.mp3
+          cp script.txt input/script.txt
       - name: Install tools
         run: |
-          pip install playwright
+          pip install playwright numpy scipy
           playwright install --with-deps chromium
           sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Build video
-        run: cd Deenora_Video_Project && python build.py --workers 2
+        run: python build.py --workers 2
       - uses: actions/upload-artifact@v4
         with:
-          name: Deenora_Promo
-          path: Deenora_Video_Project/output/Deenora_Promo.mp4
+          name: video
+          path: |
+            output/video.mp4
+            timeline.json
